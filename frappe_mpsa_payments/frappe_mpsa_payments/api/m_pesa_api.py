@@ -466,12 +466,6 @@ def sanitize_mobile_number(number: str) -> str:
     return "254" + sanitized_number
 
 
-import base64
-
-import frappe
-import requests
-
-
 def get_token(app_key, app_secret, base_url):
     authenticate_uri = "/oauth/v1/generate?grant_type=client_credentials"
     authenticate_url = f"{base_url.rstrip('/')}{authenticate_uri}"
