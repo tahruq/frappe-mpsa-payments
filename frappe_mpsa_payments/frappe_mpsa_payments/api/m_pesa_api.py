@@ -468,11 +468,16 @@ def sanitize_mobile_number(number: str) -> str:
 
 def get_token(app_key, app_secret, base_url):
     authenticate_uri = "/oauth/v1/generate?grant_type=client_credentials"
-    authenticate_url = f"{base_url}{authenticate_uri}"
+    authenticate_url = f"{base_url.rstrip('/')}{authenticate_uri}"
+
+    credentials = f"{app_key}:{app_secret}"
+    encoded_credentials = base64.b64encode(credentials.encode("utf-8")).decode("utf-8")
 
     r = requests.get(
         authenticate_url,
-        auth=HTTPBasicAuth(app_key, app_secret),
+        headers={
+            "Authorization": f"Basic {encoded_credentials}",
+        },
         timeout=30,
     )
 
@@ -485,12 +490,21 @@ def get_token(app_key, app_secret, base_url):
             f"Response: {r.text[:500]}"
         )
 
-    if "access_token" not in data:
+    if not r.ok:
         frappe.throw(
-            f"M-PESA authentication failed: {data}"
+            f"M-PESA authentication failed. "
+            f"Status: {r.status_code}, "
+            f"Response: {data}"
         )
 
-    return data["access_token"]
+    access_token = data.get("access_token")
+
+    if not access_token:
+        frappe.throw(
+            f"M-PESA authentication response did not include an access token: {data}"
+        )
+
+    return access_token
 
 
 @frappe.whitelist(allow_guest=True)
