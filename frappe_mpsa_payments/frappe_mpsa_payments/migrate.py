@@ -377,11 +377,28 @@ def create_custom_erpnext_fields():
 
 def create_fields(custom_fields):
     for doctype, fields in custom_fields.items():
+        fields_to_create = []
+
         for field in fields:
             field.setdefault("module", MODULE)
 
-    create_custom_fields(custom_fields)
+            if not frappe.db.exists(
+                "DocField",
+                {
+                    "parent": doctype,
+                    "fieldname": field.get("fieldname"),
+                },
+            ) and not frappe.db.exists(
+                "Custom Field",
+                {
+                    "dt": doctype,
+                    "fieldname": field.get("fieldname"),
+                },
+            ):
+                fields_to_create.append(field)
 
+        if fields_to_create:
+            create_custom_fields({doctype: fields_to_create})
 
 def create_erpnext_property_setters():
     property_setters = [
